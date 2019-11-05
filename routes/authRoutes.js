@@ -2,7 +2,9 @@ const passport =require('passport');
 const stripe = require('stripe')(require('../config/keys').stripeSecretKey)
 const mongoose = require('mongoose');
 const User = mongoose.model('users');
-module.exports = (app, isAuthentified) => {
+const isAuthentified= require('../middlewares/isAuthentified');
+
+module.exports = (app) => {
     app.get('/', (req,res) => {
         res.send({ li: 'hi'})
     })

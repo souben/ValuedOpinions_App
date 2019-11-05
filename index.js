@@ -4,9 +4,12 @@ const keys = require('./config/keys');
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const passport = require('passport');
-const isAuthentified = require('./middlewares/isAuthentified');
-require('./models/User');
-require('./services/passport'); // As I said , we just have to invoke passport , 
+
+
+require('./models/User');       // require it at least one time to excute it 
+require('./models/Survey');
+require('./services/passport'); 
+                                // As I said , we just have to invoke passport , 
                                 // so no need to export it from its file 
 // the first solution is to put the credentials inside the config file 
 // the second solution is to put all the mongoURI inside the config file                                
@@ -15,12 +18,16 @@ require('./services/passport'); // As I said , we just have to invoke passport ,
       .then( () => console.log('connection was passed succefully'))
       .catch( (err) => console.log(err));
 
+
 const authRouter = require('./routes/authRoutes');
+const surveysRoutes = require('./routes/surveysRoutes');
 // create an application that will setup a configuration to listen
 // to the request that will comming to express from the node side 
 // and send them to routes
-const app = express(); 
 // tell app that we will use cookies 
+
+const app = express(); 
+
 app.use(bodyParser.json());
 app.use( 
       cookieSession({
@@ -31,9 +38,10 @@ app.use(
 // tell passport that we must use cookies to handle authentification
 app.use(passport.initialize());
 app.use(passport.session());
-//
-app.use(isAuthentified);
-authRouter(app,isAuthentified);
+
+
+authRouter(app);
+surveysRoutes(app);
 // what  port we should listen to it
 // composed from two parts the first one is for : Heroku Deployment 
 // the second is for local use 

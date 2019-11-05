@@ -42,7 +42,7 @@ class Header extends React.Component{
                                 <div className="item"><Payments /></div>
                                 <div className="item "><div className="ui secondary button">Credits: {this.props.user.numberOfCredits}</div></div>
                                 <div className="item">
-                                    <a  href='/auth/google' className="ui secondary button " > logout </a>
+                                    <a  href='/api/logout' className="ui secondary button " > logout </a>
                                 </div>
                             </div>   
                 )
@@ -56,7 +56,7 @@ class Header extends React.Component{
             <div >
                 <div className="ui menu" style={{backgroundColor: 'teal'}}>
                     <div className="item">
-                        <a href="/"><h2 style={{color: 'white'}}>FeedbackCustomer</h2></a>
+                        <a href="/"><h2 style={{color: 'white'}}>Survey App</h2></a>
                     </div>
                     { this.renderHeaderButtons() }
                 </div>
