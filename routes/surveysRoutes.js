@@ -1,27 +1,78 @@
 const isAuthentified = require('../middlewares/isAuthentified');
 const isEligible = require('../middlewares/isEligible');
 const mongoose = require('mongoose');
+const _ = require('lodash');
+const { URL } = require('url');
+const Path = require('path-parser');
 const Survey = mongoose.model('surveys');
 const Mailer = require('../services/Mailer');
 const template = require('../services/emailTemplates/surveyTemplate');
 
 module.exports = app => {
-    app.post('/api/surveys', isAuthentified, isEligible, (req, res) => {
 
-        const { title, body, subject, recipients } = req.body;
-        recipients = recipients.slplit(";").map(recipient => { return {email: recipient}})
+    app.get('/api/surveys',isAuthentified ,async  (req, res) => {
+        const surveys = await Survey.find({ _user: req.user.id });
+    })
+    app.get('/api/surveys/:surveyId/:choice', (req, res) => {
+        res.send('Thanks for voting !')
+    })
+
+    app.post('/api/surveys/webhooks', (req, res) => {
+        const p = new Path('/api/surveys/:surveyId/:choice');
+        _.chain(req.body)
+            .map(({ email, url }) => {     //{ email, url}
+                    const match = p.test(pathname);
+                    if (match) {
+                        return { email, surveyId: match.surveyId, choice: match.choice }
+                    }
+    
+                })
+            .compact()
+            .uniqBy('email', 'surveyId')
+            .each(({ surveyId, email, choice}) => {
+                Survey.updateOne(
+                    {
+                        _id: surveyId,
+                        recipients: {
+                            $elemMatch: { email: email, responded: false }
+                        }
+
+                    },
+                    {
+                        $inc: { [choice]: 1},
+                        $set: { 'recipients.$.responded': true},
+                        lastResponded: new Date()
+                    }
+                ).exec();
+            })
+            .value(); 
+            
+    })
+
+    app.post('/api/surveys', async (req, res) => {
+        const { title, subject, body, recipients } = req.body;
         const survey = new Survey({
             title,
-            body,
             subject,
-            recipients: recipients.split(",").map(email => ({email}) ),
+            body,
+            recipients: recipients.split(",").map(email => ({ email: email.trim() })),
             _userId: req.user.id,
-            dateSent: Date.now
+            dateSent: Date.now()
         })
-
-        // And now we will end our email!!
+        console.log('hi')
+        // And now we will send our email!!ex
         const mailer = new Mailer(survey, template(survey));
-        survey.save()
-            .then( newSurvey => console.log(newSurvey))
+        try {
+            await mailer.send();
+            await survey.save()
+            req.user.numberOfCredits -= 1;
+            const user = await req.user.save();
+            res.send(user)
+
+        }
+        catch (e) {
+            res.send(e)
+        }
+
     })
 }; 

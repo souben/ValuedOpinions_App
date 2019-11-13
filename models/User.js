@@ -6,9 +6,7 @@ const userSchema = new Schema({
     numberOfCredits: {
         type: Number,
         default: 0
-    },
-    Surveys: [surveySchema],
-        
+    }        
 })
 
 
